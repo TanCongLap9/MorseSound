@@ -1,0 +1,94 @@
+<script>
+
+  const play = () => {
+    osc = new OscillatorNode(audioCtx, {type: "sine", frequency: 550});
+    osc.connect(audioCtx.destination);
+    osc.start();
+  };
+  const beep = (duration) => {
+    if (osc) osc.stop();
+    play();
+    setTimeout(() => osc.stop(), duration);
+  };
+  const beepAsync = async (duration) => {
+    if (osc) osc.stop();
+    play();
+    await wait(duration);
+    osc.stop();
+  };
+  const playMorseTimer = new Timer(() => {
+    osc.stop();
+    document.querySelector("#playMorse").innerHTML = "\ud83d\udd0a";
+  });
+  const playMorse = () => {
+    if (playMorseTimer.enabled) {
+      document.querySelector("#playMorse").innerHTML = "\ud83d\udd0a";
+      playMorseTimer.stop();
+      osc.stop();
+      return;
+    }
+    document.querySelector("#playMorse").innerHTML = "\u25fc";
+    // Initialize
+    osc = new OscillatorNode(audioCtx, {frequency: 550});
+    audioCtx.suspend(); // Stop audio context's "internal stopwatch"
+    const gain = new GainNode(audioCtx, {gain: 1});
+    let currentTime = audioCtx.currentTime;
+    let duration = 0;
+    const rawMorse = input.morse;
+    const morse = rawMorse.replace(/ *\/ */g, "/");
+    const [dotSec, dashSec, wordSec] = [userSettings.duration.dot, userSettings.duration.dash, userSettings.duration.word].map(v => v / 1000);
+    
+    // if (morse.slice(i, i + 3) === " / ") {
+    //   console.log(" / ");
+    // }
+    // else {
+    //   console.log((character));
+    // }
+    // Timestamp
+    for (let i = 0; i < morse.length; i++) {
+      var character = morse[i]
+      /*var oldCur = [Console]::CursorLeft, [Console]::CursorTop*/
+      /*[Console]::SetCursorPosition($OldCur[0], $OldCur[1])*/
+      switch (character) {
+        case ".":
+          gain.gain.setValueAtTime(1, currentTime);
+          gain.gain.setValueAtTime(0, currentTime + dotSec);
+          currentTime += dotSec;
+          duration += dotSec;
+          break;
+        case "-":
+          gain.gain.setValueAtTime(1, currentTime);
+          gain.gain.setValueAtTime(0, currentTime + dashSec);
+          currentTime += dashSec;
+          duration += dashSec;
+          break;
+        case "/":
+          gain.gain.setValueAtTime(0, currentTime + wordSec);
+          currentTime += wordSec;
+          duration += wordSec;
+          break;
+        case " ":
+          gain.gain.setValueAtTime(0, currentTime + dashSec);
+          currentTime += dashSec;
+          duration += dashSec;
+          break;
+        case "?":
+          for (let j = 0; j < 8; j++) {
+            gain.gain.setValueAtTime(1, currentTime);
+            gain.gain.setValueAtTime(0, currentTime + dotSec);
+            currentTime += dotSec + dotSec;
+            duration += dotSec + dotSec;
+          }
+          break;
+      }
+      if (".-?".includes(morse[i]) && ".-?".includes(morse[i + 1])) {currentTime += dotSec; duration += dotSec;} // Break between dots and dashes
+    }
+    
+    // Play and release
+    osc.connect(gain).connect(audioCtx.destination);
+    audioCtx.resume();
+    osc.start();
+    playMorseTimer.start(duration * 1000 + 500); // Wait for some more time before releasing audio
+  };
+  
+  </script>

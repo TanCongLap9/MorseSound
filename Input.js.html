@@ -1,0 +1,146 @@
+<script>
+
+  const input = {
+    get morse() {return document.querySelector("#morse").value;},
+    set morse(m) {document.querySelector("#morse").value = m;},
+    get currentMorse() {return document.querySelector("#currentMorse").innerHTML;},
+    set currentMorse(m) {
+      document.querySelector("#currentMorse").innerHTML = m;
+      if (userSettings.previewMorse)
+        document.querySelector("#currentText").innerHTML = m
+          ? `\n(${morseToText(m).replace("\n", "[Enter]")})`
+          : "";
+    },
+    get text() {return document.querySelector("#text").value;},
+    set text(t) {document.querySelector("#text").value = t;}
+  };
+  const addMorseInput = (text) => {
+    const [oldSelectionStart, oldSelectionEnd] = [document.querySelector("#morse").selectionStart, document.querySelector("#morse").selectionEnd];
+    document.querySelector("#morse").value =
+      document.querySelector("#morse").value.slice(0, document.querySelector("#morse").selectionStart) +
+      text +
+      document.querySelector("#morse").value.slice(document.querySelector("#morse").selectionEnd);
+    document.querySelector("#morse").selectionStart = oldSelectionStart + text.length;
+    document.querySelector("#morse").selectionEnd = document.querySelector("#morse").selectionStart;
+  }
+  const addMorse = (char, playSound) => {
+    let
+      stopTime = userSettings.duration.dot,
+      morseTime = playSound ? char === "." ? userSettings.duration.dot : userSettings.duration.dash : 0;
+    if (playSound) {
+      beep(morseTime);
+      stopTime += morseTime;
+    }
+    let
+      letterTime = stopTime + letterTimeoutTimer.interval,
+      wordTime = stopTime + spaceBarTimer.interval;
+    if (userSettings.disableInput) return;
+    cancelTimeout();
+    clearProgress();
+    input.currentMorse += char;
+    stopSoundTimer.restart(stopTime);
+    document.querySelector("#timeoutProgress").innerHTML += `<div class="time" style="left: ${letterTime / wordTime * 100}%;"></div>`;
+    document.querySelector("#progress").style.animation = `width ${wordTime}ms linear`;
+  }
+  const clearProgress = () => {
+    for (const elem of document.querySelectorAll("#timeoutProgress .time"))
+      elem.remove();
+    document.querySelector("#progress").style.animation = "none";
+  }
+  const cancelInput = () => {
+    cancelTimeout();
+    clearProgress();
+    if (input.currentMorse) input.currentMorse = "";
+  }
+  let oldValue = null, oldSelectionStart = 0, oldSelectionEnd = 0, isPasted = false, pressedEvent = null;
+  document.querySelector("#morse").oninput = (e) => {
+    const keepBeforeInput = () => {
+      document.querySelector("#morse").value = oldValue;
+      document.querySelector("#morse").selectionStart = oldSelectionStart;
+      document.querySelector("#morse").selectionEnd = oldSelectionEnd;
+    }
+    if (isPasted) {
+      isPasted = false;
+      input.text = morseToText(input.morse);
+      return;
+    }
+    switch (pressedEvent.key) {
+      case "Backspace":
+        if (!userSettings.disableInput) {
+          cancelInput();
+          input.text = morseToText(input.morse);
+          // TODO: Disabled input
+        }
+        return;
+      case " ":
+        if (!userSettings.disableInput) {
+          cancelInput();
+          input.text = morseToText(input.morse);
+        }
+        return;
+    }
+    if (pressedEvent.key.length !== 1 && pressedEvent.key !== "Enter") return; // Exclude special keys
+    keepBeforeInput();
+    if (pressedEvent.key === "Enter") return; // Morse doesn't accept Enter
+    if (pressing) return;
+    pressing = true;
+    switch (userSettings.inputMode) {
+      case false:
+        switch (pressedEvent.key) {
+          case ".":
+          case "0":
+            addMorse(".", true);
+            break;
+          case "-":
+          case "1":
+            addMorse("-", true);
+            break;
+        }
+        break;
+      case true:
+        cancelTimeout();
+        clearProgress();
+        play();
+        morse1KeyStopwatch.start();
+        break;
+    }
+  }
+  document.querySelector("#morse").onpaste = (e) => {
+    isPasted = true;
+  }
+  document.querySelector("#morse").onkeydown = (e) => {
+    pressedEvent = e;
+    switch (pressedEvent.key) {
+      case "Escape":
+        if (!userSettings.disableInput) {
+          cancelInput();
+        }
+        break;
+      case "Enter":
+        addMorseInput(input.currentMorse);
+        input.morse = input.morse.replace(/[ \/]*$/, "");
+        input.currentMorse = "";
+        input.text = morseToText(input.morse);
+        cancelInput();
+        break;
+    }
+    if (!isPasted)
+      [oldValue, oldSelectionStart, oldSelectionEnd] = [e.target.value, e.target.selectionStart, e.target.selectionEnd];
+  };
+  document.querySelector("#morse").onkeyup = () => {
+    if (["ctrlKey", "altKey", "metaKey"].some((modifierKey) => pressedEvent[modifierKey])) return; // Exclude special keys
+    if (pressedEvent.key.length !== 1 || pressedEvent.key === " ") return; // Exclude special keys
+    pressing = false;
+    if (userSettings.inputMode) {
+      osc.stop();
+      morse1KeyStopwatch.stop();
+      if (morse1KeyStopwatch.elapsedMilliseconds < userSettings.duration.dot * 2) {addMorse(".");} else {addMorse("-");}
+      morse1KeyStopwatch.reset();
+      /*if (!userSettings.disableInput) {
+        document.querySelector("#timeoutProgress").innerHTML += `<div class="time" style="left: ${(userSettings.duration.dot + letterTimeoutTimer.interval) / userSettings.duration.word * 100}%;"></div>`;
+        document.querySelector("#progress").style.animation = `width ${userSettings.duration.word}ms linear`;
+      }*/
+    }
+  };
+  
+  </script>

@@ -1,0 +1,81 @@
+<script>
+
+  // Timer for delaying command execution
+  class Timer {
+    constructor(elapsed, interval) {
+      if (interval != null) this.interval = interval;
+      if (elapsed != null)
+        this.addEventListener("elapsed", elapsed);
+    }
+    _id = 0;
+    _interval = 0;
+    _enabled = false;
+    _events = [];
+    get interval() {return this._interval;}
+    set interval(i) {this._interval = Number(i);}
+    get enabled() {return this._enabled;}
+    addEventListener(eventName, callback) {this._events.push({eventName, callback});}
+    on(eventName, callback) {addEventListener(eventName, callback);}
+    start(interval) {
+      if (interval != null) this.interval = interval;
+      this._id = setTimeout(() => {
+        this._events.filter(obj => obj.eventName === "elapsed").forEach(obj => obj.callback());
+        this._enabled = false;
+      }, this.interval);
+      this._enabled = true;
+    }
+    stop() {
+      clearTimeout(this._id);
+      this._enabled = false;
+    }
+    restart(interval) {
+      this.stop();
+      this.start(interval);
+    }
+  };
+  class Stopwatch {
+    _startTime = 0;
+    _stopTime = 0;
+    get elapsed() {return new Date(this.elapsedMilliseconds());} // UTC time
+    get elapsedMilliseconds() {return (this._stopTime || Date.now())  - this._startTime;}
+    get isRunning() {return this._startTime !== 0 && this._stopTime === 0;}
+    start() {this._startTime = Date.now(); this._stopTime = 0;}
+    stop() {this._stopTime = Date.now();}
+    reset() {this._startTime = this._stopTime = 0;}
+    restart() {this.reset(); this.start();}
+    static startNew() {const stopwatch = new Stopwatch(); stopwatch.start(); return stopwatch;}
+  }
+  const
+    spaceBarTimer = new Timer(
+      () => {
+        addMorseInput("/ ");
+        input.text = morseToText(input.morse);
+        cancelInput();
+      },
+      userSettings.duration.word
+    ),
+    letterTimeoutTimer = new Timer(
+      () => {
+        addMorseInput(input.currentMorse + " ");
+        input.currentMorse = "";
+        input.text = morseToText(input.morse);
+      },
+      userSettings.duration.dot * 2
+    ),
+    stopSoundTimer = new Timer(
+      () => {
+        letterTimeoutTimer.restart();
+        spaceBarTimer.restart();
+      }
+    ),
+    morse1KeyStopwatch = new Stopwatch();
+  
+  const cancelTimeout = () => {
+    if (!userSettings.disableInput) {
+      letterTimeoutTimer.stop();
+      spaceBarTimer.stop();
+      stopSoundTimer.stop();
+    }
+  };
+  
+  </script>

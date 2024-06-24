@@ -1,0 +1,50 @@
+<script>
+
+  const categorizedMorseToLetter = {
+    "letter": [
+      ["A", ".-"], ["B", "-..."], ["C", "-.-."], ["D", "-.."],
+      ["E", "."], ["F", "..-."], ["G", "--."], ["H", "...."],
+      ["I", ".."], ["J", ".---"], ["K", "-.-"], ["L", ".-.."],
+      ["M", "--"], ["N", "-."], ["O", "---"], ["P", ".--."],
+      ["Q", "--.-"], ["R", ".-."], ["S", "..."], ["T", "-"],
+      ["U", "..-"], ["V", "...-"], ["W", ".--"], ["X", "-..-"],
+      ["Y", "-.--"], ["Z", "--.."]
+    ],
+    "number": [
+      ["0", "-----"], ["1", ".----"], ["2", "..---"], ["3", "...--"], ["4", "....-"],
+      ["5", "....."], ["6", "-...."], ["7", "--..."], ["8", "---.."], ["9", "----."]
+    ],
+    "symbol": [
+      ["&", ".-..."], ["'", ".----."], ["@", ".--.-."], ["(", "-.--."], [")", "-.--.-"], [":", "---..."], [",", "--..--"], ["=", "-...-"], ["!", "-.-.--"], [".", ".-.-.-"], ["-", "-....-"], ["+", ".-.-."], ['"', ".-..-."], ["?", "..--.."], ["/", "-..-."], ["*", "...-."], ["[", ".--.."], ["{", ".--.-"], ["\\", "-.-.-"], ["<", "-.---"], ["#", "--.-."], ["%", "---.-"], ["^", "......"], ["$", "...-.."], ["_", "..--.-"], ["]", ".--..-"], ["}", ".--.--"], ["~", ".---.."], ["`", "-..-.-"], [";", "-.-.-."], [">", "-.----"], ["|", "--.-.-"]
+    ],
+    "prosign": [
+      ["SOS", "...---..."], ["\n", ".-.-"], ["Error", "........"]
+    ]
+  };
+  const morseToLetter = {
+    ...Object.fromEntries(categorizedMorseToLetter.letter),
+    ...Object.fromEntries(categorizedMorseToLetter.number),
+    ...Object.fromEntries(categorizedMorseToLetter.symbol),
+    ...Object.fromEntries(categorizedMorseToLetter.prosign)
+  };
+  const resourceString = {
+      "word": [
+        "ate", "eat", "tea", "ten", "net", "teen", "meet", "met", "it", "at", "man", "woman", "morse", "code", "hello", "hi", "hey", "bye", "goodbye", "i", "you", "he", "she", "they", "my", "your", "his", "her", "their", "me", "him", "them", "love", "hate", "what", "where", "when", "why", "who", "how", "the", "quick", "slow", "fox", "foxy", "dog", "dodge", "slow", "quirk", "jump", "message", "massage", "international", "internationalize", "internationalization", "signal", "hear", "receive", "transmit", "transmission", "mission", "start", "begin", "end", "final"
+      ],
+      "phrase": [
+        "I love you.", "Hello.", "Hi.", "The quick brown fox jumps over the lazy dog.", "Morse code", "There are 26 letters, and 10 digits in morse code.", "International morse code", "Help me!", "Thank you!", "Thanks.", "Thanks a lot!", "Thanks a bunch!", "Thank you very much!", "Thank you so much!", "How are you?", "See you later.", "See you.", "See ya.", "Goodbye.", "Bye.", "Where are you?", "Who are you?", "Message received.", "Message sent."
+      ]
+  };
+  const textToMorse = (string) =>
+    string.split("").map(v => morseToLetter[v.toUpperCase()] ?? (v === " " ? "/" : "?")).join(" ");
+  const morseToText = (morse) => {
+    let error = false;
+    const result = morse.split(" ").map(
+      (morseLetter) => morseLetter && (morseLetter === "/" ? " " : Object.keys(morseToLetter).find((key) => morseToLetter[key] === morseLetter) ?? (error = true, "?"))
+    ).join("")
+    if (error) {document.querySelector("#morse").classList.add("error");}
+    else {document.querySelector("#morse").classList.remove("error");}
+    return result;
+  };
+  
+  </script>

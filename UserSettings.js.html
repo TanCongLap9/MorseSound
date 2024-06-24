@@ -1,0 +1,53 @@
+<script>
+
+  let userSettings = {
+    previewMorse: false,
+    disableInput: false,
+    accentMode: 0,
+    inputMode: false,
+    duration: {
+      dot: 67, // Duration of dot when played
+      dash: 67*3, // Duration of dash when played
+      word: 67*7, // Duration of word when played
+      dotTimeout: 100, // Duration to wait until letter auto-finish
+      dashTimeout: 300, // Duration to wait until automatically finishing current morse letter
+      wordTimeout: 700 // Duration to wait until automatically inserting a space
+    }
+  };
+  
+  const updateDisableInput = () => {
+    const checked = document.querySelector("#disableInput").checked;
+    userSettings.disableInput = checked;
+    document.querySelector("#disableInputSetting .displayValue").innerHTML = checked ? "Play sound only" : "Input with sound";
+  };
+  const updateInputMode = () => {
+    const checked = document.querySelector("#inputMode").checked;
+    userSettings.inputMode = checked;
+    document.querySelector("#inputModeSetting .displayValue").innerHTML = checked ? "Hold any key" : "Press . or 0 for dot, - or 1 for dash";
+  };
+  const updatePreviewMorse = () => {
+    const checked = document.querySelector("#previewMorse").checked;
+    userSettings.previewMorse = checked;
+    document.querySelector("#previewMorseSetting .displayValue").innerHTML = checked ? "ON" : "OFF";
+  };
+  const updateAccentMode = () => {
+    userSettings.accentMode = Number(document.querySelector("#accentMode").value);
+  };
+  const updateUnitDuration = () => {
+    const unit = Number(document.querySelector("#unitDuration").value);
+    userSettings.duration = {...userSettings.duration, dot: unit, dash: unit * 3, word: unit * 7};
+    document.querySelector("#unitDurationSetting .displayValue").innerHTML = `${unit}ms`;
+  };
+  
+  document.querySelector("#disableInput").oninput = (e) => updateDisableInput();
+  document.querySelector("#inputMode").oninput = (e) => updateInputMode();
+  document.querySelector("#accentMode").oninput = (e) => updateAccentMode();
+  document.querySelector("#previewMorse").oninput = (e) => updatePreviewMorse();
+  document.querySelector("#unitDuration").oninput = (e) => updateUnitDuration();
+  updateDisableInput();
+  updateInputMode();
+  updateAccentMode();
+  updatePreviewMorse();
+  updateUnitDuration();
+  
+  </script>
